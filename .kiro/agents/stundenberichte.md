@@ -22,16 +22,15 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:8080
 ```
 
 - **Antwort 200 oder 401**: Bridge läuft → weiter mit Schritt 2.
-- **Verbindungsfehler / kein Prozess**: Informiere den Benutzer klar:
+- **Verbindungsfehler**: Lies `bridge_pfad` aus `config.json` und starte die Bridge:
 
-  > ❌ Die WhatsApp-Bridge ist nicht erreichbar.
-  > Bitte starte die whatsapp-bridge aus ihrem Installationsverzeichnis:
-  > ```bash
-  > source .env && go run main.go
-  > ```
-  > Danach erneut aufrufen.
+```bash
+cd <bridge_pfad aus config.json>
+source .env && go run main.go &
+sleep 10
+```
 
-  Brich dann ab – führe das Skript nicht aus.
+Falls `bridge_pfad` leer oder das Verzeichnis nicht vorhanden ist, informiere den Benutzer und brich ab.
 
 ### Schritt 2 – Integrationsskript ausführen
 

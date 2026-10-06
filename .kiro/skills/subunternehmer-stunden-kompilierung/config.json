@@ -3,6 +3,7 @@
   "beschreibung": "Konfiguration für das Subunternehmer-Stunden-Kompilierungssystem",
 
   "benachrichtigungs_nummer": "49XXXXXXXXXX",
+  "bridge_pfad": "/path/to/whatsapp-mcp-go/whatsapp-bridge",
 
   "whatsapp_gruppen": [
     {
