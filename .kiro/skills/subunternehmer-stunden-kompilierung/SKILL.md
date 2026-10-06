@@ -237,7 +237,7 @@ WhatsApp ──► whatsapp-bridge (lokal, sieht alles)
 Der `whatsapp-bridge` Prozess muss laufen:
 
 ```bash
-cd ~/Developer/tools/whatsapp-mcp-go/whatsapp-bridge
+cd ~/path/to/whatsapp-mcp-go/whatsapp-bridge
 source .env && go run main.go
 # Bridge läuft auf localhost:8080
 ```

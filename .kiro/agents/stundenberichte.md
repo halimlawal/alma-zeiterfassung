@@ -25,9 +25,8 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:8080
 - **Verbindungsfehler / kein Prozess**: Informiere den Benutzer klar:
 
   > ❌ Die WhatsApp-Bridge ist nicht erreichbar.
-  > Bitte starte sie mit:
+  > Bitte starte die whatsapp-bridge aus ihrem Installationsverzeichnis:
   > ```bash
-  > cd ~/Developer/tools/whatsapp-mcp-go/whatsapp-bridge
   > source .env && go run main.go
   > ```
   > Danach erneut aufrufen.
