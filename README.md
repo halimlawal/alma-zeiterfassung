@@ -50,7 +50,7 @@ nano .kiro/skills/subunternehmer-stunden-kompilierung/config.json
 ```
 
 Edit `config.json`:
-- `benachrichtigungs_nummer` — your WhatsApp number in international format without `+` (e.g. `4915218682585`)
+- `benachrichtigungs_nummer` — your WhatsApp number in international format without `+` (e.g. `49XXXXXXXXX`)
 - `whatsapp_gruppen[].gruppenname` — exact WhatsApp group name as it appears in the app
 - `whatsapp_gruppen[].kontakte` — whitelist of contractor names/numbers to parse (empty = nothing processed)
 
