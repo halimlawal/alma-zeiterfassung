@@ -42,11 +42,11 @@ git clone <your-repo>
 cd alma-zeiterfassung
 ```
 
-Copy the example config and fill in your values:
+Copy the committed `config.json` template and fill in your values:
 
 ```bash
-cp .kiro/skills/subunternehmer-stunden-kompilierung/config.example.json \
-   .kiro/skills/subunternehmer-stunden-kompilierung/config.json
+# Edit the file directly
+nano .kiro/skills/subunternehmer-stunden-kompilierung/config.json
 ```
 
 Edit `config.json`:
@@ -179,7 +179,6 @@ launchctl load ~/Library/LaunchAgents/de.alma.stundenberichte.plist
 alma-zeiterfassung/
 ├── .gitignore
 ├── README.md
-├── template.txt                          ← Reference report format
 └── .kiro/
     ├── agents/
     │   ├── stundenberichte.md            ← Kiro agent definition
@@ -190,8 +189,7 @@ alma-zeiterfassung/
     │   └── alma-zeiterfassung-handover.md
     └── skills/subunternehmer-stunden-kompilierung/
         ├── SKILL.md
-        ├── config.example.json           ← Template (commit this)
-        ├── config.json                   ← Your config (gitignored)
+        ├── config.json                   ← Template (fill in your values)
         ├── test_cases.txt
         └── scripts/
             ├── message_parser.py
