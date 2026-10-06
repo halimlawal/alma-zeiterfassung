@@ -44,7 +44,7 @@ python3 whatsapp_integration.py --dry-run
 
 berichte/                           ← generierte Berichte (in .gitignore)
 └── 2026/
-    └── Adam Sub & Alma/
+    └── Subunternehmer/
         ├── KW-38/
         │   └── 19-09-bis-25-09-Bad-Tölz.txt
         └── KW-39/
@@ -62,12 +62,12 @@ berichte/                           ← generierte Berichte (in .gitignore)
   "benachrichtigungs_nummer": "49XXXXXXXXXX",
   "whatsapp_gruppen": [
     {
-      "gruppenname": "Adam Sub & Alma",
+      "gruppenname": "Subunternehmer",
       "aktiv": true,
       "chat_jid": "120363...@g.us",
-      "kontakte": ["Ali", "Adam Subunternehmer @Alma", "4915754834590"],
+      "kontakte": ["Max", "Subunternehmer", "49XXXXXXXXXX"],
       "letzter_bericht_datum": "2026-10-02",
-      "letzter_kw_bericht": "berichte/2026/Adam Sub & Alma/KW-39"
+      "letzter_kw_bericht": "berichte/2026/Subunternehmer/KW-39"
     }
   ],
   "einstellungen": {
@@ -85,7 +85,7 @@ berichte/                           ← generierte Berichte (in .gitignore)
 - `letzter_bericht_datum` — Checkpoint. Nächster Lauf verarbeitet nur Nachrichten nach diesem Datum.
 - `letzter_kw_bericht` — Relativer Pfad zum zuletzt generierten KW-Ordner.
 - `benachrichtigungs_nummer` — Deine WhatsApp-Nummer (z.B. `4915218682585`). Nach jedem Lauf wird pro Auftrag eine Nachricht + eine Zusammenfassung gesendet.
-- Nicht gespeicherte Kontakte erscheinen in der Bridge als Telefonnummer (z.B. `4915754834590`), nicht als `~Name`.
+- Nicht gespeicherte Kontakte erscheinen in der Bridge als Telefonnummer (z.B. `49XXXXXXXXXX`), nicht als `~Name`.
 
 ---
 
