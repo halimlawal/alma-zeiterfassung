@@ -1,0 +1,28 @@
+# Sensitive environment files
+.env
+.env.*
+!.env.example
+
+# Generated reports (billing data — keep off version control)
+berichte/
+
+# template.txt is internal reference only
+template.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Agent logs
+.kiro/agents/*.log

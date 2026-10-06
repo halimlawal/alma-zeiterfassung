@@ -1,0 +1,29 @@
+{
+  "version": "1.3",
+  "beschreibung": "Konfiguration für das Subunternehmer-Stunden-Kompilierungssystem",
+
+  "benachrichtigungs_nummer": "49XXXXXXXXXX",
+
+  "whatsapp_gruppen": [
+    {
+      "gruppenname": "Deine WhatsApp Gruppe",
+      "beschreibung": "Kurze Beschreibung",
+      "aktiv": true,
+      "chat_jid": null,
+      "kontakte": [
+        "Kontakt Name 1",
+        "Kontakt Name 2",
+        "4915XXXXXXXXX"
+      ],
+      "letzter_bericht_datum": null,
+      "letzter_kw_bericht": null
+    }
+  ],
+
+  "einstellungen": {
+    "ausgabe_verzeichnis": "berichte",
+    "wochen_beginn": "samstag",
+    "max_nachrichten_pro_abruf": 3000,
+    "verbindungs_versuche": 5
+  }
+}

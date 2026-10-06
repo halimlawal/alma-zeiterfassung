@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Stundenberichte generieren",
+      "trigger": "UserPromptSubmit",
+      "matcher": "stundenberichte|stunden berichte|generate reports|berichte generieren",
+      "action": {
+        "type": "agent",
+        "prompt": "The user wants to generate Stundenberichte (contractor hour reports). Use the stundenberichte agent: check if the WhatsApp bridge is running at localhost:8080, then run `python3 .kiro/skills/subunternehmer-stunden-kompilierung/scripts/whatsapp_integration.py` from the project root /Users/halimlawal/Developer/alma-zeiterfassung, show the output, and summarise the results in German."
+      }
+    }
+  ]
+}
