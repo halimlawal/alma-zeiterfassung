@@ -4,7 +4,9 @@
 
 set -e
 
-PROJECT="/Users/halimlawal/Developer/alma-zeiterfassung"
+# Derive project root from this script's location (.kiro/agents/stundenberichte-schedule.sh)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SCRIPT="$PROJECT/.kiro/skills/subunternehmer-stunden-kompilierung/scripts/whatsapp_integration.py"
 LOG="$PROJECT/.kiro/agents/stundenberichte.log"
 

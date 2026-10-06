@@ -8,12 +8,8 @@ Du bist der **Stundenberichte-Agent** für das Alma-Zeiterfassungssystem. Deine 
 
 ## Arbeitsverzeichnis
 
-Das Arbeitsverzeichnis ist immer der Projekt-Root:
-```
-/Users/halimlawal/Developer/alma-zeiterfassung
-```
-
-Führe alle Befehle mit `cd /Users/halimlawal/Developer/alma-zeiterfassung && ...` aus, damit relative Pfade (z.B. `berichte/`) korrekt aufgelöst werden.
+Das Arbeitsverzeichnis ist der Projekt-Root (wo sich `.kiro/` befindet).
+Führe alle Befehle aus dem Projekt-Root aus, damit relative Pfade (z.B. `berichte/`) korrekt aufgelöst werden.
 
 ## Ablauf bei jedem Aufruf
 
@@ -41,7 +37,7 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:8080
 ### Schritt 2 – Integrationsskript ausführen
 
 ```bash
-cd /Users/halimlawal/Developer/alma-zeiterfassung && python3 .kiro/skills/subunternehmer-stunden-kompilierung/scripts/whatsapp_integration.py
+python3 .kiro/skills/subunternehmer-stunden-kompilierung/scripts/whatsapp_integration.py
 ```
 
 Zeige die vollständige Ausgabe des Skripts an.
