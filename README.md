@@ -51,6 +51,7 @@ nano .kiro/skills/subunternehmer-stunden-kompilierung/config.json
 
 Edit `config.json`:
 - `benachrichtigungs_nummer` — your WhatsApp number in international format without `+` (e.g. `49XXXXXXXXX`)
+- `bridge_pfad` — absolute path to your local `whatsapp-mcp-go/whatsapp-bridge` directory (used by the Kiro hook to auto-start the bridge if it isn't running)
 - `whatsapp_gruppen[].gruppenname` — exact WhatsApp group name as it appears in the app
 - `whatsapp_gruppen[].kontakte` — whitelist of contractor names/numbers to parse (empty = nothing processed)
 
@@ -169,7 +170,7 @@ launchctl load ~/Library/LaunchAgents/de.alma.stundenberichte.plist
 - `kontakte` whitelist ensures only authorised contractors are parsed.
 - Your own messages (`Me`) are always excluded.
 - `WHATSAPP_API_KEY` must be set as an environment variable — never hardcoded.
-- `berichte/`, `config.json`, and `.env` are gitignored.
+- `berichte/` and `.env` are gitignored. `config.json` is committed as a template — avoid putting personal data (real phone numbers, group JIDs) in it if your repo is public.
 
 ---
 
