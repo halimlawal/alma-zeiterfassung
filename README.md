@@ -170,7 +170,7 @@ launchctl load ~/Library/LaunchAgents/de.alma.stundenberichte.plist
 - `kontakte` whitelist ensures only authorised contractors are parsed.
 - Your own messages (`Me`) are always excluded.
 - `WHATSAPP_API_KEY` must be set as an environment variable — never hardcoded.
-- `berichte/` and `.env` are gitignored. `config.json` is committed as a template — avoid putting personal data (real phone numbers, group JIDs) in it if your repo is public.
+- `berichte/` and `.env` are gitignored. `config.json` is committed as a template — avoid commiting personal data (real phone numbers, group JIDs) in it if your repo is public.
 
 ---
 
