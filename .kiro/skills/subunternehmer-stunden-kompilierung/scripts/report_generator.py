@@ -550,6 +550,7 @@ class DeutscherBerichtsgenerator:
                                letztes_datum: str, letzte_datei: str) -> None:
         """Aktualisiere letzter_bericht_datum und letzter_kw_bericht (relativer KW-Ordnerpfad) in config.json."""
         import json, os
+        from datetime import datetime as _dt, timedelta as _td
 
         if not os.path.exists(config_pfad):
             return
@@ -557,6 +558,13 @@ class DeutscherBerichtsgenerator:
         try:
             with open(config_pfad, 'r', encoding='utf-8') as f:
                 config = json.load(f)
+
+            # Checkpoint auf letztes_datum + 1 Tag setzen (exklusiv), damit
+            # beim nächsten Lauf dieselben Nachrichten nicht nochmal verarbeitet werden.
+            try:
+                checkpoint_datum = (_dt.strptime(letztes_datum, "%Y-%m-%d") + _td(days=1)).strftime("%Y-%m-%d")
+            except ValueError:
+                checkpoint_datum = letztes_datum
 
             # Projekt-Root = 3 Ebenen über der config-Datei
             # (.kiro/skills/subunternehmer-stunden-kompilierung/config.json)
@@ -568,14 +576,14 @@ class DeutscherBerichtsgenerator:
 
             for gruppe in config.get("whatsapp_gruppen", []):
                 if gruppe["gruppenname"] == gruppenname:
-                    gruppe["letzter_bericht_datum"] = letztes_datum
+                    gruppe["letzter_bericht_datum"] = checkpoint_datum
                     gruppe["letzter_kw_bericht"] = kw_ordner_relativ
                     break
 
             with open(config_pfad, 'w', encoding='utf-8') as f:
                 json.dump(config, f, ensure_ascii=False, indent=2)
 
-            print(f"✓ Config aktualisiert: {gruppenname} → letzter Bericht {letztes_datum}")
+            print(f"✓ Config aktualisiert: {gruppenname} → letzter Bericht {letztes_datum} (Checkpoint: ab {checkpoint_datum})")
 
         except Exception as e:
             print(f"⚠️ Config-Update fehlgeschlagen: {e}")

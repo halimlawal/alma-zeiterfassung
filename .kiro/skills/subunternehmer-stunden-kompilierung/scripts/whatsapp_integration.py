@@ -257,6 +257,10 @@ def _benachrichtigung_senden(bridge: 'WhatsAppBridge', empfaenger: str,
 
     print(f"\n📱 Sende WhatsApp-Benachrichtigung an {empfaenger}…")
 
+    # Pfad-Duplikate entfernen (können entstehen wenn zwei Nachrichten zum selben
+    # Auftrag leicht abweichende Projektnamen hatten, aber in dieselbe Datei flossen)
+    dateipfade = list(dict.fromkeys(dateipfade))
+
     def kw_aus_pfad(pfad: str) -> str:
         for teil in pfad.replace('\\', '/').split('/'):
             if teil.startswith('KW-'):
@@ -652,6 +656,11 @@ def main():
         gruppenname = gruppe_config["gruppenname"]
         chat_jid = gruppe_config.get("chat_jid")
 
+        # Gruppe überspringen wenn keine Kontakte konfiguriert sind
+        if not gruppe_config.get("kontakte"):
+            print(f"\n  [{gruppenname}] ⚪ Übersprungen (keine Kontakte konfiguriert)")
+            continue
+
         if args.seit:
             try:
                 seit_datum = datetime.strptime(args.seit, "%Y-%m-%d")
@@ -692,6 +701,24 @@ def main():
         gesamt_eintraege += eintraege
         gesamt_dateien += dateien
         alle_gespeicherte_pfade.extend(pfade)
+
+        # Checkpoint auch dann aktualisieren wenn keine neuen Berichte gefunden wurden,
+        # damit beim nächsten Lauf nicht erneut die gesamte Historie abgerufen wird.
+        if eintraege == 0 and not args.dry_run:
+            heute = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+            try:
+                import json as _json2
+                with open(args.config, 'r', encoding='utf-8') as f:
+                    cfg = _json2.load(f)
+                for g in cfg.get("whatsapp_gruppen", []):
+                    if g["gruppenname"] == gruppenname:
+                        g["letzter_bericht_datum"] = heute
+                        break
+                with open(args.config, 'w', encoding='utf-8') as f:
+                    _json2.dump(cfg, f, ensure_ascii=False, indent=2)
+                print(f"  ✓ Checkpoint aktualisiert: {gruppenname} → {heute} (keine neuen Berichte)")
+            except Exception as e:
+                print(f"  ⚠ Checkpoint-Update fehlgeschlagen: {e}")
 
     print(f"\n{'='*50}")
     print(f"Fertig! {gesamt_eintraege} Einträge verarbeitet, {gesamt_dateien} Berichte gespeichert.")
