@@ -87,14 +87,15 @@ class DeutscherNachrichtenParser:
             r'(\d{1,2})[:.:](\d{2})\s*[-–]\s*(\d{1,2})',   # 12:00-13 Format
         ]
         
-        # Mitarbeiterzahlmuster: 3 Mitarbeiter, 4 Personen, Insgesamt 3man
+        # Mitarbeiterzahlmuster: 3 Mitarbeiter, 4 Personen, Insgesamt 3man, 2 Mann
+        # [Mm]ann? matcht: man, Man, mann, Mann (Groß- und Kleinschreibung + Doppel-n)
         self.mitarbeiter_muster = [
-            r'(\d+)\s*(?:[Mm]itarbeiter|[Pp]erson(?:en)?|man)',
+            r'(\d+)\s*(?:[Mm]itarbeiter|[Pp]erson(?:en)?|[Mm]ann?)',
             r'[Ee]insatz[:\s]*(\d+)\s*[Mm]itarbeiter',
-            r'[Ii]nsgesamt[:\s]*(\d+)\s*man',
-            r'[Ii]ngesamt[:\s]*(\d+)\s*man',  # Tippfehler berücksichtigen
-            r'[Zz]usammen[:\s]*(\d+)\s*man',   # Alternative
-            r'(\d+)\s*[Pp]ersonen?',           # Nur Personen ohne Artikel
+            r'[Ii]nsgesamt[:\s]*(\d+)\s*[Mm]ann?',
+            r'[Ii]ngesamt[:\s]*(\d+)\s*[Mm]ann?',   # Tippfehler berücksichtigen
+            r'[Zz]usammen[:\s]*(\d+)\s*[Mm]ann?',   # Alternative
+            r'(\d+)\s*[Pp]ersonen?',                # Nur Personen ohne Artikel
         ]
         
         # Gesamtstundenmuster: Insgesamt 9h, 27 Arbeitsstunden, 3*9=27, Zusammen
@@ -104,11 +105,11 @@ class DeutscherNachrichtenParser:
             r'[Zz]usammen[:\s]*(\d+(?:[,:.]\d+)?)\s*(?:h|st|Stunden?)',   # Alternative word mit Einheit
             r'[Zz]usammen[:\s]*(\d{1,2}):(\d{2})',   # Zusammen mit Zeitformat wie "17:40"
             r'(\d+(?:[,:.]\d+)?)\s*[Aa]rbeitsstunden',
-            r'(\d+)\s*[x*×]\s*(\d+(?:[,:.]\d+)?)\s*=\s*(\d+(?:[,:.]\d+)?)',
+            r'(\d+)\s*[x*×]\s*(\d+(?:[,:.]\d+)?)\s*(?:Std\.?|h|st)?\s*=\s*(\d+(?:[,:.]\d+)?)',
             r'[Gg]esamt[^:]*?(\d+(?:[,:.]\d+)?)\s*(?:h|st|Stunden?)',
-            # Einfache Zahlen NUR wenn sie nicht mit "man" oder "Mitarbeiter" enden
-            r'[Ii]nsgesamt[:\s]*(\d+(?:[,:.]\d+)?)(?!\s*man)(?!\s*[Mm]itarbeiter)',  # Negative lookahead
-            r'[Ii]ngesamt[:\s]*(\d+(?:[,:.]\d+)?)(?!\s*man)(?!\s*[Mm]itarbeiter)',   # Tippfehler
+            # Einfache Zahlen NUR wenn sie nicht mit "man", "Mitarbeiter" oder "×" enden
+            r'[Ii]nsgesamt[:\s]*(\d+(?:[,:.]\d+)?)(?!\s*[x*×])(?!\s*man)(?!\s*[Mm]itarbeiter)',  # Negative lookahead
+            r'[Ii]ngesamt[:\s]*(\d+(?:[,:.]\d+)?)(?!\s*[x*×])(?!\s*man)(?!\s*[Mm]itarbeiter)',   # Tippfehler
         ]
 
     def nachricht_parsen(self, nachricht: str) -> List[Arbeitseintrag]:
@@ -290,13 +291,17 @@ class DeutscherNachrichtenParser:
                 if ma and mitarbeiteranzahl == 0:
                     mitarbeiteranzahl = ma
                     
-                # Suche Berechnungen (3*9=27)
-                if '*' in zeile and '=' in zeile:
-                    berechnung_match = re.search(r'(\d+)\s*[*×]\s*(\d+(?:[,.:]\d+)?)\s*=\s*(\d+(?:[,.:]\d+)?)', zeile)
+                # Suche Berechnungen (3*9=27, 2×1,00 Std.=2,00 Std.)
+                if ('*' in zeile or '×' in zeile) and '=' in zeile:
+                    berechnung_match = re.search(r'(\d+)\s*[*×]\s*(\d+(?:[,.:]\d+)?)\s*(?:Std\.?|h|st)?\s*=\s*(\d+(?:[,.:]\d+)?)', zeile)
                     if berechnung_match and berechnung_total == 0:
                         try:
                             berechnung_total = float(berechnung_match.group(3).replace(',', '.'))
                             berechnung_text = zeile
+                            # Mitarbeiteranzahl aus Multiplikator übernehmen falls noch nicht bekannt
+                            # (z.B. "2 × 3,75 Std. = 7,50 Std." → 2 Mitarbeiter)
+                            if mitarbeiteranzahl == 0:
+                                mitarbeiteranzahl = int(berechnung_match.group(1))
                         except ValueError:
                             pass
                         
@@ -575,7 +580,7 @@ class DeutscherNachrichtenParser:
 
         # Phase 2: Berechnungen den Gruppen anhand der Anzahl zuordnen
         for zeile in zeilen:
-            bm = re.search(r'(\d+)\s*[*×]\s*(\d+(?:[,.:]\d+)?)\s*=\s*(\d+(?:[,.:]\d+)?)', zeile)
+            bm = re.search(r'(\d+)\s*[*×]\s*(\d+(?:[,.:]\d+)?)\s*(?:Std\.?|h|st)?\s*=\s*(\d+(?:[,.:]\d+)?)', zeile)
             if bm:
                 berechnung_anzahl = int(bm.group(1))
                 for info in gruppen_info:
@@ -633,7 +638,7 @@ class DeutscherNachrichtenParser:
                 continue
                 
             # Suche nach mehreren Berechnungen in einer Zeile/Gruppe
-            berechnungen = re.findall(r'(\d+)\s*[x*×]\s*(\d+(?:[,.:]\d+)?)\s*=\s*(\d+(?:[,.:]\d+)?)', gruppe.berechnung)
+            berechnungen = re.findall(r'(\d+)\s*[x*×]\s*(\d+(?:[,.:]\d+)?)\s*(?:Std\.?|h|st)?\s*=\s*(\d+(?:[,.:]\d+)?)', gruppe.berechnung)
             
             if len(berechnungen) > 1:
                 # Mehrere Berechnungen gefunden - erstelle separate Gruppen
@@ -680,7 +685,7 @@ class DeutscherNachrichtenParser:
             # Versuche exakte Werte aus Berechnung zu extrahieren falls vorhanden
             if berechnung_text:
                 # Suche erste passende Berechnung für diese Gruppe
-                berechnung_match = re.search(r'(\d+)\s*[*×]\s*(\d+(?:[,.:]\d+)?)\s*=\s*(\d+(?:[,.:]\d+)?)', berechnung_text)
+                berechnung_match = re.search(r'(\d+)\s*[*×]\s*(\d+(?:[,.:]\d+)?)\s*(?:Std\.?|h|st)?\s*=\s*(\d+(?:[,.:]\d+)?)', berechnung_text)
                 if berechnung_match:
                     try:
                         calc_anzahl = int(berechnung_match.group(1))
@@ -721,7 +726,7 @@ class DeutscherNachrichtenParser:
             # Versuche Stunden aus Berechnung zu extrahieren (z.B. "3*9,5=28,5")
             gesamt_stunden = netto_stunden * anzahl
             if berechnung:
-                berechnung_match = re.search(r'(\d+)\s*[*×]\s*(\d+(?:[,.:]\d+)?)\s*=\s*(\d+(?:[,.:]\d+)?)', berechnung)
+                berechnung_match = re.search(r'(\d+)\s*[*×]\s*(\d+(?:[,.:]\d+)?)\s*(?:Std\.?|h|st)?\s*=\s*(\d+(?:[,.:]\d+)?)', berechnung)
                 if berechnung_match:
                     try:
                         calc_gesamt = float(berechnung_match.group(3).replace(',', '.'))
