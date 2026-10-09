@@ -101,7 +101,7 @@ class DeutscherBerichtsgenerator:
         std_ganz = int(gesamt_stunden)
         minuten = int(round((gesamt_stunden - std_ganz) * 60))
         std_str = f"{std_ganz}h {minuten:02d}min" if minuten else f"{std_ganz}h"
-        bericht += f"\n{'═' * 40}\n"
+        bericht += f"\n{'═' * 30}\n"
         bericht += f"Gesamt KW-{kw:02d} ({start_str_kw}–{ende_str_kw}): {std_str} Arbeitsstunden\n"
         
         return bericht
