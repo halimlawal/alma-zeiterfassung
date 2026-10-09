@@ -87,16 +87,23 @@ class DeutscherNachrichtenParser:
             r'(\d{1,2})[:.:](\d{2})\s*[-–]\s*(\d{1,2})',   # 12:00-13 Format
         ]
         
-        # Mitarbeiterzahlmuster: 3 Mitarbeiter, 4 Personen, Insgesamt 3man, 2 Mann
-        # [Mm]ann? matcht: man, Man, mann, Mann (Groß- und Kleinschreibung + Doppel-n)
+        # Mitarbeiterzahlmuster: 3 Mitarbeiter, 4 Personen, Insgesamt 3man, 2 Mann, 2 Männer
+        # [Mm]änner? matcht: Männer, männer | [Mm]ann? matcht: man/Man/mann/Mann
         self.mitarbeiter_muster = [
-            r'(\d+)\s*(?:[Mm]itarbeiter|[Pp]erson(?:en)?|[Mm]ann?)',
+            r'(\d+)\s*(?:[Mm]itarbeiter|[Pp]erson(?:en)?|[Mm]änner?|[Mm]ann?)',
             r'[Ee]insatz[:\s]*(\d+)\s*[Mm]itarbeiter',
             r'[Ii]nsgesamt[:\s]*(\d+)\s*[Mm]ann?',
             r'[Ii]ngesamt[:\s]*(\d+)\s*[Mm]ann?',   # Tippfehler berücksichtigen
             r'[Zz]usammen[:\s]*(\d+)\s*[Mm]ann?',   # Alternative
             r'(\d+)\s*[Pp]ersonen?',                # Nur Personen ohne Artikel
         ]
+        
+        # Deutsche Zahlwörter → Ziffern (für "Zwei man", "Drei Mitarbeiter" etc.)
+        self._zahlwoerter = {
+            'ein': '1', 'eine': '1', 'einen': '1', 'einem': '1',
+            'zwei': '2', 'drei': '3', 'vier': '4', 'fünf': '5',
+            'sechs': '6', 'sieben': '7', 'acht': '8', 'neun': '9', 'zehn': '10'
+        }
         
         # Gesamtstundenmuster: Insgesamt 9h, 27 Arbeitsstunden, 3*9=27, Zusammen
         self.gesamtstunden_muster = [
@@ -157,11 +164,15 @@ class DeutscherNachrichtenParser:
                 projekt = self._projektname_extrahieren(zeile, datum_match)
                 if projekt:
                     aktueller_eintrag.projekt = projekt
-                # Falls kein Projekt in dieser Zeile, prüfe nächste Zeile  
-                elif i + 1 < len(zeilen):
-                    naechste_zeile = zeilen[i + 1].strip()
-                    if not self._datum_finden(naechste_zeile) and 'arbeitsbeginn' not in naechste_zeile.lower():
-                        aktueller_eintrag.projekt = self._projektname_aus_zeile_extrahieren(naechste_zeile)
+                # Falls kein Projekt in dieser Zeile, prüfe nächste NICHT-LEERE Zeile
+                else:
+                    for j in range(i + 1, min(i + 6, len(zeilen))):
+                        naechste_zeile = zeilen[j].strip()
+                        if not naechste_zeile:
+                            continue  # Leere Zeilen überspringen
+                        if not self._datum_finden(naechste_zeile) and 'arbeitsbeginn' not in naechste_zeile.lower():
+                            aktueller_eintrag.projekt = self._projektname_aus_zeile_extrahieren(naechste_zeile)
+                        break  # Nur erste nicht-leere Zeile prüfen
                     
             else:
                 # Zweites "Arbeitsbeginn" nach "Insgesamt" → neuer Eintrag gleichen Datums
@@ -903,8 +914,16 @@ class DeutscherNachrichtenParser:
 
     def _mitarbeiteranzahl_extrahieren(self, zeile: str) -> Optional[int]:
         """Extrahiere Anzahl der Mitarbeiter aus Zeile."""
+        # Deutsche Zahlwörter in Ziffern umwandeln (z.B. "Zwei man" → "2 man")
+        zeile_norm = zeile
+        zeile_klein = zeile.lower()
+        for wort, ziffer in self._zahlwoerter.items():
+            zeile_klein = re.sub(r'\b' + wort + r'\b', ziffer, zeile_klein)
+        # Ziffern aus normalisierter Kleinbuchstaben-Version extrahieren
         for muster in self.mitarbeiter_muster:
-            match = re.search(muster, zeile)  # Entferne .lower() für Case-Sensitivity
+            match = re.search(muster, zeile_klein)
+            if not match:
+                match = re.search(muster, zeile_norm)  # Fallback auf Original für Großschreibung
             if match:
                 try:
                     return int(match.group(1))
