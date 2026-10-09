@@ -565,8 +565,7 @@ class DeutscherNachrichtenParser:
         for zeile in zeilen:
             zeile_klein = zeile.lower()
             ma = self._mitarbeiteranzahl_extrahieren(zeile)
-            ist_summe = (bool(re.match(r'^\d+\s*man\b', zeile_klein))
-                         or 'ingesamt' in zeile_klein
+            ist_summe = ('ingesamt' in zeile_klein
                          or 'zusammen' in zeile_klein)
 
             if ma and not ist_summe:
