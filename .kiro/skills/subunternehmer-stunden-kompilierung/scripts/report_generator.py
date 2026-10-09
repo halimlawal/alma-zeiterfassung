@@ -84,13 +84,25 @@ class DeutscherBerichtsgenerator:
         bericht = self._bericht_header_generieren(start_datum, ende_datum, projekt)
         
         # Generiere Einträge für jeden Tag
+        gesamt_stunden = 0.0
         for i, eintrag in enumerate(eintraege_sortiert):
             tages_bericht = self._tages_eintrag_generieren(eintrag)
             bericht += tages_bericht
+            gesamt_stunden += eintrag.gesamtstunden or 0.0
             
             # Füge Trennlinie hinzu (außer beim letzten Eintrag)
             if i < len(eintraege_sortiert) - 1:
                 bericht += "⸻\n\n"
+
+        # KW-Gesamtstunden am Ende des Berichts
+        kw = start_datum.isocalendar()[1]
+        start_str_kw = f"{start_datum.day:02d}.{start_datum.month:02d}"
+        ende_str_kw = f"{ende_datum.day:02d}.{ende_datum.month:02d}"
+        std_ganz = int(gesamt_stunden)
+        minuten = int(round((gesamt_stunden - std_ganz) * 60))
+        std_str = f"{std_ganz}h {minuten:02d}min" if minuten else f"{std_ganz}h"
+        bericht += f"\n{'═' * 40}\n"
+        bericht += f"Gesamt KW-{kw:02d} ({start_str_kw}–{ende_str_kw}): {std_str} Arbeitsstunden\n"
         
         return bericht
 
