@@ -69,10 +69,12 @@ class DeutscherNachrichtenParser:
             r'(\d{1,2})/(\d{1,2})/(\d{2,4})'
         ]
         
-        # Zeitbereichsmuster: 07:00-17:30, 8.00-18.00, 07.00-17:30
+        # Zeitbereichsmuster: 07:00-17:30, 8.00-18.00, 07.00-17:30, 7:00 Uhr bis 12:00 Uhr
         self.zeitbereich_muster = [
             r'(\d{1,2})[:.:](\d{2})\s*[-–]\s*(\d{1,2})[:.:](\d{2})',
             r'(\d{1,2})\.(\d{2})\s*[-–]\s*(\d{1,2})\.(\d{2})',  # Punkt als Trenner
+            r'(\d{1,2})[:.:](\d{2})\s*(?:[Uu]hr\s*)?[Bb]is\s*(\d{1,2})[:.:](\d{2})',  # "7:00 Uhr bis 12:00"
+            r'(\d{1,2})\s*[Uu]hr\s*[Bb]is\s*(\d{1,2})[:.:](\d{2})',  # "7 Uhr bis 12:00" → 3 Gruppen
             r'(\d{1,2})\s*[-–]\s*(\d{1,2})[:.:](\d{2})',  # Einfache Start zu detaillierte End
             r'(\d{1,2})[:.:](\d{2})\s*[-–]\s*(\d{1,2})',  # Detaillierte Start zu einfache End
             r'(\d{1,2})\s*[-–]\s*(\d{1,2})',  # Einfache Stundenbereiche
@@ -170,8 +172,16 @@ class DeutscherNachrichtenParser:
                         naechste_zeile = zeilen[j].strip()
                         if not naechste_zeile:
                             continue  # Leere Zeilen überspringen
-                        if not self._datum_finden(naechste_zeile) and 'arbeitsbeginn' not in naechste_zeile.lower():
-                            aktueller_eintrag.projekt = self._projektname_aus_zeile_extrahieren(naechste_zeile)
+                        if not self._datum_finden(naechste_zeile):
+                            zeile_klein_j = naechste_zeile.lower()
+                            if 'arbeitsbeginn' in zeile_klein_j:
+                                # Projektname steht VOR "Arbeitsbeginn" in derselben Zeile
+                                idx = zeile_klein_j.index('arbeitsbeginn')
+                                vorher = naechste_zeile[:idx].strip().strip(' -.,;:')
+                                if vorher:
+                                    aktueller_eintrag.projekt = self._projektname_aus_zeile_extrahieren(vorher)
+                            else:
+                                aktueller_eintrag.projekt = self._projektname_aus_zeile_extrahieren(naechste_zeile)
                         break  # Nur erste nicht-leere Zeile prüfen
                     
             else:
