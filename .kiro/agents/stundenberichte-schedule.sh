@@ -24,7 +24,7 @@ else
   echo "⚠️  Bridge nicht erreichbar – versuche zu starten…" >> "$LOG"
 
   # bridge_pfad aus config.json lesen
-  BRIDGE_DIR=$(python3 -c "import json; c=json.load(open('$CONFIG')); print(c.get('bridge_pfad',''))" 2>/dev/null)
+  BRIDGE_DIR=$(/Library/Frameworks/Python.framework/Versions/3.14/bin/python3 -c "import json; c=json.load(open('$CONFIG')); print(c.get('bridge_pfad',''))" 2>/dev/null)
 
   if [[ -z "$BRIDGE_DIR" ]]; then
     echo "❌ bridge_pfad nicht in config.json – Abbruch" >> "$LOG"
@@ -37,19 +37,22 @@ else
   fi
 
   # Schritt 2b: Bridge starten (identisch zum Hook-Befehl)
+  # Vollständige Pfade nötig da launchd keinen User-PATH kennt
+  GO=/usr/local/go/bin/go
   cd "$BRIDGE_DIR"
   set -a
   source .env 2>/dev/null || true
   set +a
-  go run main.go >> "$BRIDGE_LOG" 2>&1 &
+  "$GO" run main.go >> "$BRIDGE_LOG" 2>&1 &
   BRIDGE_PID=$!
   BRIDGE_GESTARTET=true
   echo "Bridge gestartet (PID $BRIDGE_PID)" >> "$LOG"
 
   # Schritt 2c: Bis zu 3× auf 'Connected to WhatsApp' oder 'REST server is running' prüfen
+  # 'go run' kompiliert erst → 15s pro Versuch (gesamt 45s)
   VERBUNDEN=false
   for VERSUCH in 1 2 3; do
-    sleep 5
+    sleep 15
     if grep -q "Connected to WhatsApp\|REST server is running" "$BRIDGE_LOG" 2>/dev/null; then
       echo "✅ Bridge verbunden (Versuch $VERSUCH)" >> "$LOG"
       VERBUNDEN=true
@@ -68,7 +71,7 @@ fi
 
 # Schritt 3: Berichte generieren
 cd "$PROJECT"
-python3 "$SCRIPT" >> "$LOG" 2>&1
+/Library/Frameworks/Python.framework/Versions/3.14/bin/python3 "$SCRIPT" >> "$LOG" 2>&1
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 0 ]; then
