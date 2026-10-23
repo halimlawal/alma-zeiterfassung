@@ -63,10 +63,11 @@ class Validierungsproblem:
 
 class DeutscherNachrichtenParser:
     def __init__(self):
-        # Deutsche Datumsmuster: 24.9.26, 1.10.26, 28.09.2026
+        # Deutsche Datumsmuster: 24.9.26, 1.10.26, 28.09.2026, 14-10-2026
         self.datumsmuster = [
             r'(\d{1,2})\.(\d{1,2})\.(\d{2,4})',
-            r'(\d{1,2})/(\d{1,2})/(\d{2,4})'
+            r'(\d{1,2})/(\d{1,2})/(\d{2,4})',
+            r'(\d{1,2})-(\d{1,2})-(\d{4})',   # DD-MM-YYYY mit Bindestrichen
         ]
         
         # Zeitbereichsmuster: 07:00-17:30, 8.00-18.00, 07.00-17:30, 7:00 Uhr bis 12:00 Uhr
@@ -89,10 +90,10 @@ class DeutscherNachrichtenParser:
             r'(\d{1,2})[:.:](\d{2})\s*[-–]\s*(\d{1,2})',   # 12:00-13 Format
         ]
         
-        # Mitarbeiterzahlmuster: 3 Mitarbeiter, 4 Personen, Insgesamt 3man, 2 Mann, 2 Männer
+        # Mitarbeiterzahlmuster: 3 Mitarbeiter, 4 Personen, Insgesamt 3man, 2 Mann, 2 Männer, 2 persone
         # [Mm]änner? matcht: Männer, männer | [Mm]ann? matcht: man/Man/mann/Mann
         self.mitarbeiter_muster = [
-            r'(\d+)\s*(?:[Mm]itarbeiter|[Pp]erson(?:en)?|[Mm]änner?|[Mm]ann?)',
+            r'(\d+)\s*(?:[Mm]itarbeiter|[Pp]ersone?n?|[Mm]änner?|[Mm]ann?)',
             r'[Ee]insatz[:\s]*(\d+)\s*[Mm]itarbeiter',
             r'[Ii]nsgesamt[:\s]*(\d+)\s*[Mm]ann?',
             r'[Ii]ngesamt[:\s]*(\d+)\s*[Mm]ann?',   # Tippfehler berücksichtigen

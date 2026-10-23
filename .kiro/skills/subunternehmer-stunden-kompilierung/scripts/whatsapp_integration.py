@@ -128,6 +128,9 @@ class WhatsAppBridge:
                 return None
 
         jid_muster = re.compile(r'\[.*?Chat JID:\s*([^\]]+)\]')
+        # Normalisiere Unicode-Escapes im Rohtext (z.B. \u0026 → &)
+        if rohtext:
+            rohtext = rohtext.replace('\\u0026', '&').replace('\\u0027', "'")
         gruppenname_kurz = gruppenname.lower().strip("…").strip()[:15]
 
         for zeile in rohtext.split('\n'):
