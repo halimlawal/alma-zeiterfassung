@@ -184,6 +184,11 @@ class DeutscherNachrichtenParser:
                             else:
                                 aktueller_eintrag.projekt = self._projektname_aus_zeile_extrahieren(naechste_zeile)
                         break  # Nur erste nicht-leere Zeile prüfen
+
+                # Weitere Felder aus der Datum-Zeile extrahieren (Einzeiler-Nachrichten)
+                # z.B. "Projekt 14-10-2026 Arbeitsbeginn 11:30 bis 17:00 Uhr insgesamt 6:30"
+                self._zeile_in_eintrag_parsen(zeile, aktueller_eintrag)
+                alle_zeilen_buffer.append(zeile)
                     
             else:
                 # Zweites "Arbeitsbeginn" nach "Insgesamt" → neuer Eintrag gleichen Datums
@@ -450,8 +455,8 @@ class DeutscherNachrichtenParser:
     def _datum_normalisieren(self, datum_str: str) -> str:
         """Konvertiere deutsches Datumsformat zu ISO-Format."""
         try:
-            # Verschiedene Trenner behandeln
-            datum_str = datum_str.replace('/', '.')
+            # Verschiedene Trenner behandeln: '.', '/', '-' (DD-MM-YYYY)
+            datum_str = datum_str.replace('/', '.').replace('-', '.')
             teile = datum_str.split('.')
             
             tag = int(teile[0])
