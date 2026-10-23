@@ -155,8 +155,13 @@ class DeutscherBerichtsgenerator:
                 eintrag_text += f"{symbol} {problem.schweregrad.upper()}: {problem.nachricht}\n"
             eintrag_text += "\n"
         
-        # Arbeitszeit
-        if eintrag.arbeitsbeginn and eintrag.arbeitsende:
+        # Arbeitszeit — nur anzeigen wenn alle Gruppen dieselbe Zeit haben (oder nur 1 Gruppe)
+        gruppen_mit_eigener_zeit = [g for g in eintrag.arbeitergruppen if g.arbeitsbeginn]
+        hat_verschiedene_zeiten = (
+            len(gruppen_mit_eigener_zeit) > 1 and
+            len({g.arbeitsbeginn for g in gruppen_mit_eigener_zeit}) > 1
+        )
+        if not hat_verschiedene_zeiten and eintrag.arbeitsbeginn and eintrag.arbeitsende:
             eintrag_text += f"Arbeitszeit: {eintrag.arbeitsbeginn}–{eintrag.arbeitsende} Uhr\n"
         
         # Leistung (falls vorhanden) — entferne "Leistung:" Präfix falls bereits vorhanden
@@ -226,29 +231,36 @@ class DeutscherBerichtsgenerator:
         return text
 
     def _komplexes_format_generieren(self, eintrag: Arbeitseintrag) -> str:
-        """Generiere Format für komplexe Multi-Group-Szenarien - EXAKT wie template.txt."""
+        """Generiere Format für komplexe Multi-Group-Szenarien."""
         text = ""
+        
+        # Prüfe ob Gruppen verschiedene Zeiten haben → (Gruppe N) Label anzeigen
+        gruppen_mit_zeit = [g for g in eintrag.arbeitergruppen if g.arbeitsbeginn]
+        hat_verschiedene_zeiten = (
+            len(gruppen_mit_zeit) > 1 and
+            len({g.arbeitsbeginn for g in gruppen_mit_zeit}) > 1
+        )
         
         for i, gruppe in enumerate(eintrag.arbeitergruppen):
             if i > 0:
-                text += "\n"  # Leerzeile zwischen Gruppen
+                text += "\n"
+            
+            # Arbeitszeit pro Gruppe (nur wenn verschiedene Zeiten)
+            if hat_verschiedene_zeiten and gruppe.arbeitsbeginn and gruppe.arbeitsende:
+                text += f"Arbeitszeit: (Gruppe {i+1}) {gruppe.arbeitsbeginn}–{gruppe.arbeitsende} Uhr\n\n"
                 
-            # Format exakt wie im Template für mehrere Gruppen
             if gruppe.anzahl == 1:
-                text += f"1 Mitarbeiter:\n"
+                text += "1 Mitarbeiter:\n"
             else:
                 text += f"{gruppe.anzahl} Mitarbeiter:\n"
             
-            # Pausen für diese Gruppe - EXAKT wie Template mit richtigem Singular/Plural
             if gruppe.pausen:
                 pausen_text = self._pausen_formatieren(gruppe.pausen)
                 if len(gruppe.pausen) == 1:
-                    text += f"Pause {pausen_text}\n"  # Singular ohne Doppelpunkt
+                    text += f"Pause {pausen_text}\n"
                 else:
-                    text += f"Pausen {pausen_text}\n"  # Plural ohne Doppelpunkt
-            # Keine else-Klausel da im Template nicht gezeigt
+                    text += f"Pausen {pausen_text}\n"
             
-            # Berechnung für diese Gruppe - exakt wie Template mit deutscher Formatierung
             netto_str = self._format_stunden(gruppe.netto_stunden)
             gesamt_str = self._format_stunden(gruppe.gesamt_stunden)
             text += f"{gruppe.anzahl} × {netto_str} Stunden = {gesamt_str} Arbeitsstunden\n"

@@ -24,6 +24,8 @@ class Arbeitergruppe:
     netto_stunden: float
     gesamt_stunden: float
     berechnung: str  # z.B. "3*9,5=28,5"
+    arbeitsbeginn: str = ""  # Optional: eigene Zeit für diese Gruppe
+    arbeitsende: str = ""
 
 @dataclass 
 class Arbeitseintrag:
@@ -577,19 +579,38 @@ class DeutscherNachrichtenParser:
         gruppen_info: List[Dict] = []
         aktuelle_anzahl: Optional[int] = None
         pausen_buffer: List[Pausenzeit] = []
+        aktuelle_beginn: str = ""
+        aktuelle_ende: str = ""
 
         for zeile in zeilen:
             zeile_klein = zeile.lower()
             ma = self._mitarbeiteranzahl_extrahieren(zeile)
-            ist_summe = ('ingesamt' in zeile_klein
-                         or 'zusammen' in zeile_klein)
+
+            # Dynamische Summen-Erkennung: wenn Anzahl = Summe aller bisherigen Gruppen
+            # Ausnahme: Zeilen mit eigener Zeit (z.B. "Arbeitsbeginn 2 persone 08:30-16:00") sind immer Gruppen
+            summe_bisher = sum(info['anzahl'] for info in gruppen_info)
+            if aktuelle_anzahl is not None:
+                summe_bisher += aktuelle_anzahl
+            hat_eigene_zeit = 'arbeitsbeginn' in zeile_klein and bool(self._zeitbereich_extrahieren(zeile))
+            ist_summe = (
+                'ingesamt' in zeile_klein
+                or 'zusammen' in zeile_klein
+                or (ma is not None and summe_bisher > 0 and ma == summe_bisher and not hat_eigene_zeit)
+            )
 
             if ma and not ist_summe:
                 # Schliesse vorherige Gruppe ab
                 if aktuelle_anzahl is not None:
-                    gruppen_info.append({'anzahl': aktuelle_anzahl, 'pausen': list(pausen_buffer)})
+                    gruppen_info.append({'anzahl': aktuelle_anzahl, 'pausen': list(pausen_buffer),
+                                         'arbeitsbeginn': aktuelle_beginn, 'arbeitsende': aktuelle_ende})
                 aktuelle_anzahl = ma
                 pausen_buffer = []
+                # Per-Gruppe-Zeit extrahieren falls "Arbeitsbeginn N persone HH:MM-HH:MM" Format
+                aktuelle_beginn, aktuelle_ende = "", ""
+                if 'arbeitsbeginn' in zeile_klein:
+                    zeiten = self._zeitbereich_extrahieren(zeile)
+                    if zeiten:
+                        aktuelle_beginn, aktuelle_ende = zeiten
 
             elif 'pause' in zeile_klein and 'kein' not in zeile_klein:
                 pausen_buffer.extend(self._pausen_extrahieren(zeile))
@@ -599,10 +620,19 @@ class DeutscherNachrichtenParser:
 
         # Letzte Gruppe speichern
         if aktuelle_anzahl is not None:
-            gruppen_info.append({'anzahl': aktuelle_anzahl, 'pausen': list(pausen_buffer)})
+            gruppen_info.append({'anzahl': aktuelle_anzahl, 'pausen': list(pausen_buffer),
+                                 'arbeitsbeginn': aktuelle_beginn, 'arbeitsende': aktuelle_ende})
 
         if not gruppen_info:
             return []
+
+        # Gemeinsame Pausen: wenn nur die letzte Gruppe Pausen hat → auf alle Gruppen anwenden
+        letzte_hat_pausen = bool(gruppen_info[-1].get('pausen'))
+        andere_ohne_pausen = all(not info.get('pausen') for info in gruppen_info[:-1])
+        if len(gruppen_info) > 1 and letzte_hat_pausen and andere_ohne_pausen:
+            gemeinsame_pausen = gruppen_info[-1]['pausen']
+            for info in gruppen_info[:-1]:
+                info['pausen'] = list(gemeinsame_pausen)
 
         # Phase 2: Berechnungen den Gruppen anhand der Anzahl zuordnen
         for zeile in zeilen:
@@ -621,7 +651,9 @@ class DeutscherNachrichtenParser:
             berechnung = info.get('berechnung', '')
 
             netto_stunden = self._arbeitsdauer_berechnen_basis(
-                eintrag.arbeitsbeginn, eintrag.arbeitsende, pausen
+                info.get('arbeitsbeginn') or eintrag.arbeitsbeginn,
+                info.get('arbeitsende') or eintrag.arbeitsende,
+                pausen
             )
             gesamt_stunden = netto_stunden * info['anzahl']
 
@@ -644,12 +676,18 @@ class DeutscherNachrichtenParser:
                     gesehen.add(key)
                     einzigartige_pausen.append(p)
 
+            # Per-Gruppe-Zeit: eigene Zeit aus gruppen_info, sonst Eintrags-Gesamtzeit
+            g_beginn = info.get('arbeitsbeginn', '') or eintrag.arbeitsbeginn
+            g_ende = info.get('arbeitsende', '') or eintrag.arbeitsende
+
             gruppen.append(Arbeitergruppe(
                 anzahl=info['anzahl'],
                 pausen=einzigartige_pausen,
                 netto_stunden=netto_stunden,
                 gesamt_stunden=gesamt_stunden,
-                berechnung=berechnung
+                berechnung=berechnung,
+                arbeitsbeginn=g_beginn,
+                arbeitsende=g_ende
             ))
 
         return gruppen
