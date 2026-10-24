@@ -30,6 +30,7 @@ CONFIG_PFAD = os.path.join(SCRIPT_DIR, '..', 'config.json')
 sys.path.insert(0, SCRIPT_DIR)
 from message_parser import DeutscherNachrichtenParser, Arbeitseintrag
 from report_generator import DeutscherBerichtsgenerator
+from zusammenfassung_generator import zusammenfassungen_erstellen
 
 
 # ─────────────────────────────────────────────
@@ -727,6 +728,13 @@ def main():
     print(f"Fertig! {gesamt_eintraege} Einträge verarbeitet, {gesamt_dateien} Berichte gespeichert.")
     if args.dry_run:
         print("(DRY-RUN: keine Dateien wurden geschrieben)")
+    else:
+        # Automatische Zusammenfassungen per Auftrag pro KW
+        if gesamt_dateien > 0:
+            zusammen = zusammenfassungen_erstellen(ausgabe_verzeichnis)
+            if zusammen:
+                print(f"\n📁 {len(zusammen)} Zusammenfassung(en) aktualisiert:"
+                      f" berichte/{datetime.now().year}/Zusammenfassungen/")
 
     if benachrichtigungs_nummer and gesamt_dateien > 0 and not args.dry_run:
         _benachrichtigung_senden(bridge, benachrichtigungs_nummer, alle_gespeicherte_pfade)
