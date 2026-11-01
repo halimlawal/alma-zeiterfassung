@@ -47,14 +47,27 @@ def _kw_datum_aus_verzeichnis(kw_verzeichnis: str) -> Tuple[str, str, str]:
 
 
 def _gesamtstunden_aus_datei(inhalt: str) -> float:
-    """Extrahiere die KW-Gesamtstunden aus dem letzten ══ Block."""
-    muster = re.findall(r'Gesamt KW-\d+[^:]*:\s*([\d,]+)h(?:\s+(\d+)min)?', inhalt)
-    if muster:
-        letzter = muster[-1]
-        stunden = float(letzter[0].replace(',', '.'))
-        if letzter[1]:
-            stunden += int(letzter[1]) / 60.0
-        return round(stunden, 2)
+    """Extrahiere die KW-Gesamtstunden aus dem letzten ══ Block.
+    Unterstützt: '87,5h', '37 Arbeitsstunden', '5h 30min'
+    """
+    # Beide Formate: "37h", "87,5h Arbeitsstunden", "37 Arbeitsstunden"
+    muster = re.findall(
+        r'Gesamt KW-\d+[^:]*:\s*([\d,]+)h?(?:\s+(\d+)min)?(?:\s*Arbeitsstunden)?',
+        inhalt
+    )
+    # Nur Treffer nehmen, die wirklich Stunden darstellen (nicht z.B. "0")
+    for letzter in reversed(muster):
+        stunden_str = letzter[0]
+        if not stunden_str:
+            continue
+        try:
+            stunden = float(stunden_str.replace(',', '.'))
+            if letzter[1]:
+                stunden += int(letzter[1]) / 60.0
+            if stunden > 0:
+                return round(stunden, 2)
+        except ValueError:
+            continue
     return 0.0
 
 
