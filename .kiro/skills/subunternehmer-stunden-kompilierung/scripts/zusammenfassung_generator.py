@@ -59,12 +59,12 @@ def _gesamtstunden_aus_datei(inhalt: str) -> float:
 
 
 def _format_stunden(stunden: float) -> str:
-    """Formatiere Stunden: 5.5 → '5,5h', 9.0 → '9h', 5.5833 → '5h 35min'."""
-    ganz = int(stunden)
-    minuten = round((stunden - ganz) * 60)
-    if minuten == 0:
-        return f"{ganz}h"
-    return f"{ganz}h {minuten}min"
+    """Formatiere Stunden im deutschen Dezimalformat: 9h, 14,5h, 14,75h."""
+    rounded = round(stunden, 2)
+    if rounded == int(rounded):
+        return f"{int(rounded)}h"
+    formatted = f"{rounded:.2f}".rstrip('0').replace('.', ',')
+    return f"{formatted}h"
 
 
 def zusammenfassungen_erstellen(ausgabe_verzeichnis: str, jahr: int = None) -> List[str]:

@@ -445,9 +445,9 @@ def _ist_stundenbericht(text: str) -> bool:
         return True
     if hat_zeitbereich and hat_datum:
         return True
-    if hat_zeitbereich and hat_gesamtstunden:
+    if hat_zeitbereich and hat_gesamtstunden and hat_datum:  # Datum erforderlich
         return True
-    if bool(re.search(r'\d+\s*[*×]\s*\d+\s*=\s*\d+', text_lower)):
+    if bool(re.search(r'\d+\s*[*×]\s*\d+\s*=\s*\d+', text_lower)) and hat_datum:
         return True
 
     return False

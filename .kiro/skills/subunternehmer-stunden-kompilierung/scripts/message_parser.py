@@ -603,9 +603,10 @@ class DeutscherNachrichtenParser:
                 if aktuelle_anzahl is not None:
                     gruppen_info.append({'anzahl': aktuelle_anzahl, 'pausen': list(pausen_buffer),
                                          'arbeitsbeginn': aktuelle_beginn, 'arbeitsende': aktuelle_ende})
+                    pausen_buffer = []  # Nur zurücksetzen wenn eine vorherige Gruppe geschlossen wird
+                # Erste Gruppe: pausen_buffer NICHT zurücksetzen – Pausen vor dem Worker-Count
+                # gehören zu dieser Gruppe (z.B. "Pause: 12:00-13:00\n2 Personen")
                 aktuelle_anzahl = ma
-                pausen_buffer = []
-                # Per-Gruppe-Zeit extrahieren falls "Arbeitsbeginn N persone HH:MM-HH:MM" Format
                 aktuelle_beginn, aktuelle_ende = "", ""
                 if 'arbeitsbeginn' in zeile_klein:
                     zeiten = self._zeitbereich_extrahieren(zeile)
