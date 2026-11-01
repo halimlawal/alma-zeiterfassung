@@ -72,13 +72,30 @@ def zusammenfassungen_erstellen(ausgabe_verzeichnis: str, jahr: int = None) -> L
     Scannt alle Subunternehmer-Berichte und erstellt Zusammenfassungen
     pro Auftrag und KW unter ausgabe_verzeichnis/YYYY/Zusammenfassungen/KW-XX/
     
-    Rückgabe: Liste erstellter Zusammenfassungs-Dateien
+    Bereinigt zuerst Duplikate (Einträge nach dem ersten Gesamt-KW-Block).
     """
     if jahr is None:
         jahr = datetime.now().year
 
     basis = os.path.join(ausgabe_verzeichnis, str(jahr))
     zusammen_basis = os.path.join(basis, 'Zusammenfassungen')
+
+    # Schritt 0: Duplikate aus allen Berichten entfernen
+    for datei in sorted(glob.glob(os.path.join(basis, '*', 'KW-*', '*.txt'))):
+        if 'Zusammenfassungen' in datei:
+            continue
+        try:
+            with open(datei, 'r', encoding='utf-8') as f:
+                inhalt = f.read()
+            gesamt_muster = re.search(r'(═{10,}\nGesamt KW-\d+[^\n]*\n)', inhalt)
+            if gesamt_muster:
+                rest = inhalt[gesamt_muster.end():]
+                if rest.strip():
+                    sauber = inhalt[:gesamt_muster.end()].rstrip() + "\n"
+                    with open(datei, 'w', encoding='utf-8') as f:
+                        f.write(sauber)
+        except Exception:
+            pass
 
     # Alle Berichte sammeln (nicht aus Zusammenfassungen)
     # Struktur: {(kw_label, auftrag_norm): [(subunternehmer, datei, auftrag, inhalt)]}
